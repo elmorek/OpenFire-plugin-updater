@@ -7,8 +7,10 @@ from datetime import date
 
 config = {
     'OPENFIRE_PLUGINS_DIRECTORY' : '/usr/share/openfire/plugins/',
+    'OPENFIRE_LOGS_DIRECTORY' : '/usr/share/openfire/plugins'
     'AVAYA_PLUGIN_NAME' : 'avaya.jar',
-    'OPENFIRE_USER' : 'openfire'
+    'OPENFIRE_USER' : 'openfire:openfire',
+    'OPENFIRE_LOGS' : []
 }
 
 parser = OptionParser()
@@ -16,17 +18,16 @@ parser.add_option('-f', dest='filename')
 parser.add_option('--rollback', action='store_true', dest='rollback')
 (options, args) = parser.parse_args()
 
-if options.filename and not options.rollback:
-    newPlugin = options.filename
-else:
-    print 'No plugin name was provided. Please use <python upgrader.py -f [filename]>'
-    sys.exit()
-
 if options.rollback:
     rollback = options.rollback
 else:
     rollback = False
 
+if options.filename and not options.rollback:
+    newPlugin = options.filename
+else:
+    print 'No plugin name was provided. Please use <python upgrader.py -f [filename]>'
+    sys.exit()
 
 today = date.today().isoformat()
 
@@ -35,7 +36,7 @@ def renamePlugin(newPlugin):
         os.system('mv '+newPlugin+' /tmp/'+config['AVAYA_PLUGIN_NAME'])
         if os.path.exists('/tmp/'+config['AVAYA_PLUGIN_NAME']):
             print "New plugin renamed to "+config['AVAYA_PLUGIN_NAME']
-            serviceOps('java', 'off')
+            serviceOps('openfire', 'off')
         else:
             print "New plugin could not be renamed, exiting..."
             sys.exit()
@@ -92,9 +93,10 @@ def deletePlugin():
 
 def installPlugin():
     if rollback == False:
-        os.system('cp  '+config['OPENFIRE_PLUGINS_DIRECTORY'])
+        os.system('cp /tmp/'+config['AVAYA_PLUGIN_NAME']+' 'config['OPENFIRE_PLUGINS_DIRECTORY'])
         if os.path.exists(config['OPENFIRE_PLUGINS_DIRECTORY']+config['AVAYA_PLUGIN_NAME']):
             print 'New Avaya plugin copied to plugins directory'
+            os.system('chmod 644 '+config['OPENFIRE_PLUGINS_DIRECTORY']+config['AVAYA_PLUGIN_NAME'])
             os.system('chown '+config['OPENFIRE_USER']+' '+config['OPENFIRE_PLUGINS_DIRECTORY']+config['AVAYA_PLUGIN_NAME'])
             print 'New Avaya plugin owned by user '+config['OPENFIRE_USER']
             serviceOps('openfire', 'on')
