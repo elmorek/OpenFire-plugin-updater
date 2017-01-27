@@ -16,9 +16,11 @@ parser.add_option('-f', dest='filename')
 parser.add_option('--rollback', action='store_true', dest='rollback')
 (options, args) = parser.parse_args()
 
-if options.filename:
+if options.filename and not options.rollback:
     newPlugin = options.filename
-
+else:
+    print 'No plugin name was provided. Please use <python upgrader.py -f [filename]>'
+    sys.exit()
 
 if options.rollback:
     rollback = options.rollback
@@ -52,7 +54,6 @@ def serviceOps(processName, operation):
                 time.sleep(5)
             else:
                 print 'OpenFire service is not running'
-                sys.exit()
             proc = subprocess.Popen(["ps -ef | grep "+processName+" | grep -v grep | awk '{print $2}'"], stdout=subprocess.PIPE, shell=True)
             (out, err) = proc.communicate()
             if out:
@@ -91,7 +92,7 @@ def deletePlugin():
 
 def installPlugin():
     if rollback == False:
-        os.system('cp /tmp/avaya.jar '+config['OPENFIRE_PLUGINS_DIRECTORY'])
+        os.system('cp  '+config['OPENFIRE_PLUGINS_DIRECTORY'])
         if os.path.exists(config['OPENFIRE_PLUGINS_DIRECTORY']+config['AVAYA_PLUGIN_NAME']):
             print 'New Avaya plugin copied to plugins directory'
             os.system('chown '+config['OPENFIRE_USER']+' '+config['OPENFIRE_PLUGINS_DIRECTORY']+config['AVAYA_PLUGIN_NAME'])
